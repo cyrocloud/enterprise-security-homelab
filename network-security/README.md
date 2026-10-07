@@ -301,13 +301,3 @@ Additional documentation within this section will provide deeper implementation 
 - Controlled security-testing workflows
 
 Where appropriate, diagrams and sanitized screenshots will be included to demonstrate configurations without exposing sensitive infrastructure information.
-
----
-
-## Security Note
-
-This repository documents a controlled personal lab environment.
-
-IP addressing, credentials, authentication material, public endpoints, sensitive identifiers, and other unnecessary infrastructure details are intentionally excluded or sanitized.
-
-Security-testing techniques documented within this repository are performed against systems and networks specifically configured and authorized for testing.
