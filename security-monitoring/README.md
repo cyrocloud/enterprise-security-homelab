@@ -385,11 +385,3 @@ Additional documentation in this section will cover:
 - Security monitoring lessons learned
 
 Detailed documentation will focus on **architecture, implementation, validation, and troubleshooting** rather than simply documenting product installation.
-
----
-
-## Security Note
-
-All security testing documented in this repository is performed within systems and networks that I own or am explicitly authorized to test.
-
-Sensitive information, credentials, public addressing, and unnecessary infrastructure identifiers are excluded or sanitized from public documentation.
