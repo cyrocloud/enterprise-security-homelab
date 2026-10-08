@@ -1,268 +1,348 @@
 # Enterprise Security Home Lab
 
-## Overview
+**Infrastructure Engineering | Cloud Security | Hybrid Identity | Network Security | Security Operations**
 
-This repository documents my **Enterprise Security Home Lab**, a continuously evolving environment built to design, implement, test, and validate infrastructure and cybersecurity solutions outside of production environments.
+Welcome to my Enterprise Security Home Lab — a personally designed, implemented, and maintained technical environment built to explore enterprise infrastructure, cybersecurity, Microsoft cloud technologies, and security architecture.
 
-The lab extends technologies and architectural concepts I work with professionally while providing an independent environment for deeper testing, security validation, integration, troubleshooting, and research.
+This environment runs primarily on a **Dell PowerEdge R630 using Proxmox VE** and includes virtualized Windows and Linux workloads, network security appliances, identity services, security monitoring platforms, and vulnerability assessment tools.
 
-The environment is built primarily on **Proxmox VE** and incorporates network segmentation, hybrid identity, endpoint security, vulnerability management, network security monitoring, offensive security testing, DNS services, and network-attached storage.
+The lab also integrates with my personally managed Microsoft cloud tenant, allowing me to evaluate hybrid identity, endpoint management, and Microsoft security technologies.
 
-A key objective of this repository is to document not only *what* was implemented, but also the **architecture, design decisions, security considerations, implementation methods, validation procedures, and lessons learned**. The documentation may also serve as a reference for others designing similar lab environments.
+This repository documents the hands-on engineering behind the environment, including architecture decisions, deployment processes, configuration considerations, troubleshooting, validation, and lessons learned.
 
----
-
-## Core Technologies
-
-The environment currently incorporates technologies including:
-
-- Proxmox VE
-- pfSense
-- Microsoft Active Directory Domain Services
-- Microsoft Entra ID
-- Microsoft Entra Connect
-- Microsoft Defender for Endpoint
-- Windows 10 / Windows 11
-- Windows Server
-- Ubuntu Linux
-- Kali Linux
-- Wazuh
-- Security Onion
-- Qualys
-- Horizon3.ai NodeZero
-- TrueNAS SCALE
-- Pi-hole
-- Open vSwitch (OVS)
-- SMB
-
-The environment continues to change as technologies, architectures, and security scenarios are evaluated.
+> **Engineering philosophy:** Go beyond getting a technology working. Understand how it operates, how it integrates with other systems, how to secure it, and how to troubleshoot it when something fails.
 
 ---
 
-## Infrastructure & Virtualization
+## Architecture Overview
 
-The core virtualization platform is **Proxmox VE**, hosted on a Dell PowerEdge server.
+The environment brings together multiple infrastructure and security disciplines into a single interconnected lab.
 
-Proxmox provides the compute, storage, and virtual networking foundation for the environment and hosts workloads supporting:
+```mermaid
+flowchart TB
+    HOST["Dell PowerEdge R630<br/>Proxmox VE"]
 
-- Identity and directory services
-- Windows endpoint testing
-- Linux infrastructure
-- Network security
-- Security monitoring
-- Vulnerability management
-- Offensive security testing
-- Network storage
-- DNS services
+    subgraph NET["Network Infrastructure"]
+        FW["pfSense<br/>Firewall & Segmentation"]
+        DNS["Pi-hole<br/>DNS Filtering"]
+    end
 
-Multiple virtual networking technologies are used to support segmentation and specialized security-monitoring requirements.
+    subgraph ID["Identity & Endpoints"]
+        AD["Windows Server<br/>Active Directory & DNS"]
+        WIN["Windows 10 / 11"]
+        LIN["Linux Workloads"]
+    end
 
----
+    subgraph SEC["Security Monitoring"]
+        WAZ["Wazuh"]
+        SO["Security Onion"]
+    end
 
-## Network Architecture & Segmentation
+    subgraph VULN["Security Assessment"]
+        QUAL["Qualys"]
+        KALI["Kali Linux"]
+        NODE["NodeZero Trial"]
+    end
 
-Network segmentation is a fundamental component of the environment.
+    subgraph STORAGE["Storage"]
+        NAS["TrueNAS SCALE<br/>SMB"]
+    end
 
-**pfSense** provides firewalling, routing, and policy enforcement between selected network segments. Dedicated security-testing networks are isolated from trusted workloads through explicit firewall policies.
+    subgraph MS["Microsoft Cloud Tenant"]
+        ENTRA["Microsoft Entra ID"]
+        INTUNE["Microsoft Intune"]
+        MDE["Microsoft Defender for Endpoint"]
+    end
 
-This architecture allows potentially hostile or untrusted activity to be generated and analyzed while limiting unnecessary communication with other network segments.
+    HOST --> NET
+    HOST --> ID
+    HOST --> SEC
+    HOST --> VULN
+    HOST --> STORAGE
 
-The isolated environment supports controlled activities such as:
+    AD -->|"Entra Connect"| ENTRA
+    INTUNE -.-> WIN
+    MDE -.-> WIN
+    FW --> WIN
+    FW --> LIN
+    WIN --> NAS
+```
 
-- Vulnerability assessment
-- Penetration testing
-- Exploit validation
-- Malware-related security testing
-- Honeypot deployments
-- Network traffic analysis
-- Detection validation
+This is a logical architecture diagram. Detailed infrastructure and security relationships are documented separately.
 
-Firewall policies are used to control communication between security-testing workloads, trusted systems, management networks, and other segments.
-
----
-
-## Network Security Monitoring
-
-The environment incorporates multiple layers of security visibility.
-
-### Security Onion
-
-Security Onion is used for network security monitoring and analysis of selected network traffic.
-
-An **Open vSwitch (OVS)** implementation within the Proxmox networking architecture supports mirrored traffic delivery to monitoring workloads.
-
-This provides visibility into network activity generated during controlled testing and enables analysis from a network-detection perspective.
-
-### Wazuh
-
-Wazuh provides centralized security monitoring and endpoint telemetry across selected systems.
-
-The platform is used to evaluate host-level activity and detection capabilities alongside network-level monitoring.
-
-Together, these technologies provide multiple perspectives into activity occurring throughout the environment.
+**[View Full Architecture Documentation](architecture/README.md)**
 
 ---
 
-## Vulnerability Management & Security Validation
+## Technology Stack
 
-The lab incorporates vulnerability assessment and autonomous security validation technologies.
+| Category | Technologies |
+|---|---|
+| Virtualization | Proxmox VE, KVM, Open vSwitch |
+| Operating Systems | Windows Server, Windows 10/11, Ubuntu, Kali Linux |
+| Networking | pfSense, VLANs, Firewall Rules, DNS |
+| Identity | Active Directory DS, Microsoft Entra ID, Entra Connect |
+| Endpoint Security | Microsoft Defender for Endpoint, Microsoft Intune, Group Policy |
+| Security Monitoring | Wazuh, Security Onion |
+| Vulnerability Management | Qualys, Horizon3.ai NodeZero (Trial) |
+| Security Testing | Kali Linux, T-Pot |
+| Storage | TrueNAS SCALE, ZFS, SMB |
+| Network Services | Pi-hole |
+| Cloud | Microsoft Azure and Microsoft 365 Security Ecosystem |
 
-### Qualys
-
-Qualys is used for vulnerability scanning and assessment of selected systems within the environment.
-
-This provides visibility into vulnerabilities, exposed services, configuration weaknesses, and remediation opportunities.
-
-### Horizon3.ai NodeZero
-
-NodeZero has been used to perform autonomous penetration testing and attack-path validation within the controlled lab environment.
-
-This provides an additional method of evaluating whether identified weaknesses can be practically leveraged and how security controls respond to simulated attack activity.
+The technologies listed reflect platforms used or evaluated in the lab. Individual documents describe their implementation scope and distinguish deployed controls from planned improvements.
 
 ---
 
-## Hybrid Identity
+## Engineering Projects and Documentation
 
-The environment includes an Active Directory infrastructure integrated with Microsoft cloud identity services.
+### 1. Infrastructure and Virtualization
 
-The architecture includes:
+**[Proxmox VE Infrastructure](proxmox/README.md)**
+
+Deployment and management of virtualized Windows and Linux workloads on a Dell PowerEdge R630.
+
+Topics include:
+
+- Virtual machine provisioning
+- Virtual networking
+- Windows 11 virtual TPM and VirtIO configuration
+- Linux deployment
+- VM migrations using OVA, VMDK, and QCOW2
+- Infrastructure troubleshooting
+
+Additional documentation:
+
+- [Virtual Machine Deployment](proxmox/vm-deployment.md)
+- [Virtual Machine Migration](proxmox/vm-migration.md)
+
+### 2. Network Security and Segmentation
+
+**[Network Security Architecture](network-security/README.md)**
+
+Implementation and evaluation of network security boundaries using pfSense and Proxmox networking.
+
+Topics include:
+
+- Firewall policies
+- Network segmentation
+- VLAN isolation
+- Controlled security-testing environments
+- Network connectivity validation
+- Security considerations
+
+Additional documentation:
+
+- [pfSense Segmentation](network-security/pfsense-segmentation.md)
+
+### 3. Identity and Microsoft Security
+
+**[Identity Architecture](identity/README.md)**
+
+A Windows Server Active Directory environment integrated with a personally managed Microsoft cloud tenant.
+
+Topics include:
 
 - Active Directory Domain Services
-- DNS
 - Group Policy
 - Microsoft Entra Connect
-- Microsoft Entra ID
-- Hybrid identity scenarios
-
-This environment provides a platform for validating identity architecture, authentication behavior, directory synchronization, endpoint integration, and security controls across on-premises and cloud identity systems.
-
----
-
-## Microsoft Endpoint Security
-
-Microsoft Defender for Endpoint is integrated with selected Windows systems within the environment.
-
-Testing and validation have included:
-
-- Defender for Endpoint onboarding
-- Endpoint security configuration
-- Microsoft Defender policy deployment
-- Group Policy integration
-- Device Control
-- USB/removable-storage policy enforcement
-- Device identification and policy validation
-
-These scenarios provide an environment for evaluating endpoint controls and validating expected behavior without introducing changes into production systems.
-
----
-
-## Security Testing Environment
-
-Dedicated virtual machines are maintained for controlled security testing.
-
-These workloads include platforms such as:
-
-- Kali Linux
-- Windows test endpoints
-- Ubuntu Linux
-- Security monitoring systems
-- Vulnerability scanners
-- Honeypot/security research workloads
-
-Potentially unsafe testing is performed within segmented networks protected by pfSense policies designed to prevent unintended communication with trusted systems.
-
-The objective is to maintain a controlled environment where security controls can be tested against realistic traffic and attack scenarios while preserving network isolation.
-
----
-
-## Storage Architecture
-
-**TrueNAS SCALE** provides network storage services within the lab.
-
-The implementation includes SMB-based file services and provides an environment for testing:
-
-- Network file sharing
-- SMB
-- Permissions and access controls
-- Storage connectivity
-- Cross-platform file access
-- Network segmentation involving storage services
-
----
-
-## DNS Services
-
-**Pi-hole** is deployed as part of the lab's DNS architecture.
-
-The service provides DNS-based filtering and an additional source of visibility into DNS activity generated by systems within selected portions of the environment.
-
----
-
-## Virtual Machine Migration
-
-The environment also includes virtual machines migrated from other virtualization platforms into Proxmox.
-
-Migration work has included:
-
-- OVA
-- VMDK
-- QCOW2
-- VirtualBox
-- Virt-Manager
-
-The repository will document the migration process, disk import procedures, storage considerations, boot configuration, troubleshooting, and post-migration validation.
-
----
-
-## Architecture Principles
-
-The environment is designed around several core principles:
-
-- **Segmentation** — Separate workloads based on function and risk.
-- **Isolation** — Restrict security-testing workloads from trusted environments.
-- **Least Privilege** — Permit network communication only where required.
-- **Defense in Depth** — Combine endpoint, network, identity, and vulnerability-management controls.
-- **Visibility** — Collect telemetry from multiple layers of the environment.
-- **Validation** — Verify that security controls behave as designed.
-- **Repeatability** — Document configurations and procedures so implementations can be reproduced.
-- **Controlled Testing** — Evaluate security technologies without introducing unnecessary risk to production environments.
-
----
-
-## Repository Documentation
-
-This repository will contain detailed documentation covering areas such as:
-
-- Proxmox architecture and configuration
-- Virtual networking and bridges
-- pfSense network segmentation
-- Firewall policy design
-- Security VLAN architecture
-- Open vSwitch traffic mirroring
-- Security Onion
-- Wazuh
-- Vulnerability management
-- Qualys
-- NodeZero security validation
-- Active Directory
-- Microsoft Entra hybrid identity
+- Hybrid identity
+- Microsoft Intune
 - Microsoft Defender for Endpoint
-- Device Control and USB security
-- TrueNAS SCALE and SMB
-- Pi-hole
-- VM migrations
-- Troubleshooting and validation
+- Endpoint onboarding
+- USB Device Control testing
 
-Each section focuses on the **architecture, implementation, security considerations, testing methodology, and technical decisions** behind the configuration.
+Additional documentation:
+
+- [Active Directory](identity/active-directory.md)
+- [Microsoft Entra Connect](identity/entra-connect.md)
+- [Hybrid Identity](identity/hybrid-identity.md)
+- [Microsoft Defender for Endpoint](identity/defender-for-endpoint.md)
+
+### 4. Security Monitoring and Detection
+
+**[Security Monitoring Architecture](security-monitoring/README.md)**
+
+Evaluation of host-based and network-based security monitoring technologies.
+
+Topics include:
+
+- Wazuh endpoint monitoring
+- Security Onion network monitoring
+- Open vSwitch traffic mirroring
+- Security telemetry
+- Detection validation
+- Troubleshooting
+
+Additional documentation:
+
+- [Wazuh](security-monitoring/wazuh.md)
+- [Security Onion](security-monitoring/security-onion.md)
+
+### 5. Vulnerability Management and Security Assessment
+
+**[Vulnerability Management Architecture](vulnerability-management/README.md)**
+
+Hands-on vulnerability assessment and authorized security testing within an isolated lab.
+
+Topics include:
+
+- Qualys vulnerability scanning
+- Vulnerability identification
+- Risk-based prioritization
+- Horizon3.ai NodeZero trial evaluation
+- Attack-path validation
+- Remediation and retesting
+
+Additional documentation:
+
+- [Qualys](vulnerability-management/qualys.md)
+- [NodeZero](vulnerability-management/nodezero.md)
+
+### 6. Storage Infrastructure
+
+**[Storage Architecture](storage/README.md)**
+
+TrueNAS SCALE deployment within Proxmox for centralized network storage.
+
+Topics include:
+
+- ZFS architecture
+- SMB file sharing
+- Windows client connectivity
+- Authentication and permissions
+- Storage security
+- Troubleshooting and recovery considerations
+
+Additional documentation:
+
+- [TrueNAS SCALE and SMB](storage/truenas-smb.md)
+
+### 7. Network Services
+
+**[Network Services Architecture](network-services/README.md)**
+
+DNS services and filtering within the lab environment.
+
+Topics include:
+
+- Pi-hole DNS filtering
+- DNS resolution
+- pfSense integration considerations
+- Active Directory DNS
+- DNS troubleshooting
+- Network security and DNS bypass considerations
+
+Additional documentation:
+
+- [Pi-hole](network-services/pihole.md)
 
 ---
 
-## Purpose
+## Hands-On Engineering Approach
 
-This lab serves as an independent engineering environment for designing, testing, and validating cybersecurity, cloud, networking, identity, and infrastructure solutions outside of production environments.
+Every major technology in this repository represents an opportunity to develop practical engineering skills through deployment, configuration, troubleshooting, and testing.
 
-The repository documents architecture decisions, configurations, security controls, troubleshooting, testing methodologies, and lessons learned while implementing and evaluating technologies across the environment.
+My approach follows a repeatable process:
 
-It is also intended to provide practical examples and architectural ideas for engineers and security professionals building their own lab environments.
+```mermaid
+flowchart LR
+    A["Research"] --> B["Design"]
+    B --> C["Deploy"]
+    C --> D["Configure"]
+    D --> E["Test"]
+    E --> F["Troubleshoot"]
+    F --> G["Document"]
+    G --> H["Improve"]
+```
+
+The emphasis is on understanding how systems behave, not simply completing an installation.
+
+### Key Areas of Focus
+
+**Infrastructure Engineering**
+
+Building and maintaining virtualized infrastructure, networking, storage, and operating-system services.
+
+**Cloud and Hybrid Identity**
+
+Understanding how on-premises identity integrates with Microsoft Entra ID and cloud-based management services.
+
+**Security Architecture**
+
+Evaluating layered controls across identity, endpoints, networking, monitoring, and infrastructure.
+
+**Security Validation**
+
+Testing whether configurations produce the intended behavior and documenting findings.
+
+**Troubleshooting**
+
+Investigating issues systematically across network, operating-system, application, and security layers.
 
 ---
+
+## Security Architecture Principles
+
+The lab is guided by several principles:
+
+- **Defense in Depth:** Use complementary security controls rather than relying on one technology.
+- **Least Privilege:** Restrict access according to operational requirements.
+- **Network Segmentation:** Separate trusted infrastructure from controlled security-testing workloads.
+- **Identity Security:** Treat authentication, authorization, and privileged access as foundational controls.
+- **Visibility:** Use endpoint and network monitoring to understand system behavior.
+- **Validation:** Verify that security controls work as intended.
+- **Continuous Improvement:** Review configurations, troubleshoot issues, and refine the architecture.
+
+---
+
+## Current Areas of Development
+
+This is an ongoing engineering environment rather than a completed one-time project.
+
+Areas of continued development include:
+
+- Advanced Microsoft Entra security configurations
+- Microsoft Defender and Intune policy testing
+- Security detection engineering
+- Security monitoring improvements
+- Infrastructure automation
+- Advanced network security
+- Vulnerability remediation workflows
+- Storage recovery and resilience
+- Microsoft Azure security architecture
+- Zero Trust architecture principles
+
+New documentation will be added as additional capabilities are implemented and validated.
+
+---
+
+## About This Project
+
+I work professionally in systems engineering, cloud infrastructure, and Microsoft security technologies.
+
+I built this environment to strengthen my practical understanding of infrastructure and cybersecurity, evaluate technologies independently, and explore how different systems integrate within an enterprise-style architecture.
+
+My longer-term focus is on **Cloud Security Architecture, Microsoft Azure, Hybrid Identity, and Enterprise Security Engineering**.
+
+This repository serves as a living technical portfolio of my hands-on work, engineering decisions, troubleshooting experience, and continued professional development.
+
+---
+
+## Repository Navigation
+
+| Section | Documentation |
+|---|---|
+| Architecture | [View](architecture/README.md) |
+| Proxmox | [View](proxmox/README.md) |
+| Network Security | [View](network-security/README.md) |
+| Identity | [View](identity/README.md) |
+| Security Monitoring | [View](security-monitoring/README.md) |
+| Vulnerability Management | [View](vulnerability-management/README.md) |
+| Storage | [View](storage/README.md) |
+| Network Services | [View](network-services/README.md) |
+
+
+---
+
+**Built, configured, tested, and maintained through hands-on engineering. Documented to share knowledge and demonstrate continuous technical development.**
